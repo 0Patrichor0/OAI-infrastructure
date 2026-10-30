@@ -1,0 +1,18 @@
+[Unit]
+Description=O-RAN CU-CP (F1-C 127.0.0.3:38472, E1 38462, N2 -> AMF, E2 -> RIC)
+After=network-online.target flexric-ric.service docker.service
+Wants=network-online.target flexric-ric.service
+Requires=docker.service
+
+[Service]
+Type=simple
+ExecStartPre=/bin/bash -c 'for i in $(seq 1 60); do ss -ln -A sctp | grep -q "127.0.0.1:36421" && exit 0; sleep 2; done; exit 1'
+ExecStart=/home/ubuntu/oai-ran-e2/cmake_targets/ran_build/build/nr-softmodem -O /home/ubuntu/oai-ran-conf/cucp.conf
+Restart=always
+RestartSec=5
+LimitNOFILE=65536
+StandardOutput=append:/home/ubuntu/oai-ran-logs/cucp.log
+StandardError=append:/home/ubuntu/oai-ran-logs/cucp.log
+
+[Install]
+WantedBy=multi-user.target

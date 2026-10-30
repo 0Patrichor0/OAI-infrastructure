@@ -1,0 +1,9 @@
+[Unit]
+Description=FlexRIC guard - sqlite DB retention + log size caps
+After=flexric-ric.service
+Wants=flexric-ric.service
+
+[Service]
+Type=oneshot
+ExecStart=/usr/bin/flock -n /run/flexric-guard.lock /usr/local/bin/flexric-guard.sh
+Nice=10

@@ -1,0 +1,8 @@
+cmake_minimum_required(VERSION 3.15)
+project(intent_prb_tests C)
+enable_testing()
+set(OAI_MAC_DIR "/home/ubuntu/oai-ran-e2/openair2/LAYER2/NR_MAC_gNB" CACHE PATH "Production scheduler header directory")
+add_executable(test_prb_policy test_prb_policy.c)
+target_include_directories(test_prb_policy PRIVATE ${OAI_MAC_DIR})
+target_compile_options(test_prb_policy PRIVATE -Wall -Wextra -Werror)
+add_test(NAME intent_slice_prb_policy COMMAND test_prb_policy)

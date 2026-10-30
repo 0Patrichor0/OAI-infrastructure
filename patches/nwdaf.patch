@@ -1,0 +1,20 @@
+diff --git a/mtlf/oai-nwdaf-mtlf/nnwdaf_ml_provision_server/go/model_ml_event_subscription.go b/mtlf/oai-nwdaf-mtlf/nnwdaf_ml_provision_server/go/model_ml_event_subscription.go
+index 4062a88..3175866 100644
+--- a/mtlf/oai-nwdaf-mtlf/nnwdaf_ml_provision_server/go/model_ml_event_subscription.go
++++ b/mtlf/oai-nwdaf-mtlf/nnwdaf_ml_provision_server/go/model_ml_event_subscription.go
+@@ -37,6 +37,15 @@ type MlEventSubscription struct {
+ 
+ 	MlEvRepCon MlRepEventCondition `json:"mlEvRepCon,omitempty"`
+ 
++	// MlModelInfo carries the requested model id/version. Without this field the
++	// typed struct drops `mlModelInfo` when re-marshalled, so the handler could
++	// never honour the version sent by the caller and always fell back to the
++	// hardcoded per-event default.
++	MlModelInfo *struct {
++		ModelId      string `json:"modelId,omitempty"`
++		ModelVersion string `json:"modelVersion,omitempty"`
++	} `json:"mlModelInfo,omitempty"`
++
+ 	// String representing the ML Model Interoperability Information.
+ 	ModelInterInfo string `json:"modelInterInfo,omitempty"`
+ 

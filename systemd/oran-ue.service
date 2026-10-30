@@ -1,0 +1,20 @@
+[Unit]
+Description=OAI nrUE (rfsim client, IMSI 208950000000031)
+After=network-online.target oran-du.service
+Wants=network-online.target
+Requires=oran-du.service
+
+[Service]
+Type=simple
+# 等 DU 的 rfsim server 起来
+ExecStartPre=/bin/bash -c 'for i in $(seq 1 60); do ss -ltn | grep -q ":4043" && exit 0; sleep 2; done; exit 1'
+ExecStart=/home/ubuntu/oai-ran-e2/cmake_targets/ran_build/build/nr-uesoftmodem -O /home/ubuntu/oai-ran-conf/ue.conf \
+  -r 106 --numerology 1 --band 78 -C 3450720000 --rfsim
+Restart=always
+RestartSec=10
+LimitNOFILE=65536
+StandardOutput=append:/home/ubuntu/oai-ran-logs/ue.log
+StandardError=append:/home/ubuntu/oai-ran-logs/ue.log
+
+[Install]
+WantedBy=multi-user.target

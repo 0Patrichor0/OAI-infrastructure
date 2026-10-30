@@ -1,0 +1,11 @@
+[Unit]
+Description=每 3 分钟检查 UE 用户面，异常时按阶梯自愈
+
+[Timer]
+OnBootSec=4min
+OnUnitActiveSec=3min
+AccuracySec=20s
+Unit=oran-ue-watchdog.service
+
+[Install]
+WantedBy=timers.target

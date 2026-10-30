@@ -1,0 +1,7 @@
+[Unit]
+Description=Redeploy NWDAF model if AI Fabric lost its in-memory deployment
+After=docker.service
+
+[Service]
+Type=oneshot
+ExecStart=/home/ubuntu/nwdaf-rel17/systemd/nwdaf-deployment-watchdog.sh

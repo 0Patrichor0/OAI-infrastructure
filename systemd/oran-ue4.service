@@ -1,0 +1,19 @@
+[Unit]
+Description=OAI nrUE node #4 (netns ue4, IMSI 208950000000132)
+After=network-online.target oran-du.service
+Wants=oran-du.service
+
+[Service]
+Type=simple
+# netns/veth 是易失资源，每次启动前幂等重建
+ExecStartPre=/home/ubuntu/oai-ran-conf/ue-netns-setup.sh 4
+ExecStart=/usr/sbin/ip netns exec ue4 /home/ubuntu/oai-ran-e2/cmake_targets/ran_build/build/nr-uesoftmodem -O /home/ubuntu/oai-ran-conf/ue4.conf -r 106 --numerology 1 --band 78 -C 3450720000 --rfsim
+Restart=always
+RestartSec=10
+TimeoutStopSec=15
+KillMode=mixed
+StandardOutput=append:/home/ubuntu/oai-ran-logs/ue4.log
+StandardError=append:/home/ubuntu/oai-ran-logs/ue4.log
+
+[Install]
+WantedBy=multi-user.target

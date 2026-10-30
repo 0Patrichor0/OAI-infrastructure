@@ -1,0 +1,18 @@
+[Unit]
+Description=O-RAN CU-UP (E1 127.0.0.6:38462, F1-U 127.0.0.6:2152, N3 192.168.72.1)
+After=network-online.target oran-cu-cp.service docker.service
+Wants=network-online.target oran-cu-cp.service
+Requires=docker.service
+
+[Service]
+Type=simple
+ExecStartPre=/bin/bash -c 'for i in $(seq 1 60); do ss -ln -A sctp | grep -q "127.0.0.3:38462" && exit 0; sleep 2; done; exit 1'
+ExecStart=/home/ubuntu/oai-ran-e2/cmake_targets/ran_build/build/nr-cuup -O /home/ubuntu/oai-ran-conf/cuup.conf
+Restart=always
+RestartSec=5
+LimitNOFILE=65536
+StandardOutput=append:/home/ubuntu/oai-ran-logs/cuup.log
+StandardError=append:/home/ubuntu/oai-ran-logs/cuup.log
+
+[Install]
+WantedBy=multi-user.target

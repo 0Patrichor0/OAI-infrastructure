@@ -1,0 +1,21 @@
+[Unit]
+Description=FlexRIC xApp - MAC/RLC/PDCP/GTP stats monitor (custom SM 142/143/144/148)
+After=network-online.target flexric-ric.service
+Wants=flexric-ric.service
+Requires=flexric-ric.service
+
+[Service]
+Type=simple
+User=ubuntu
+WorkingDirectory=/home/ubuntu/oai-ran-e2/openair2/E2AP/flexric
+ExecStartPre=/bin/bash -c 'for i in $(seq 1 60); do ss -ln -A sctp | grep -q "127.0.0.1:36422" && exit 0; sleep 2; done; exit 1'
+Environment=XAPP_DURATION=-1
+ExecStart=/home/ubuntu/oai-ran-e2/openair2/E2AP/flexric/build/examples/xApp/c/monitor/xapp_gtp_mac_rlc_pdcp_moni
+Restart=always
+RestartSec=10
+LimitNOFILE=65536
+StandardOutput=append:/home/ubuntu/oai-ran-logs/xapp_gtp_mac.log
+StandardError=append:/home/ubuntu/oai-ran-logs/xapp_gtp_mac.log
+
+[Install]
+WantedBy=multi-user.target

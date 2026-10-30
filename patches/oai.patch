@@ -1,0 +1,397 @@
+diff --git a/openair2/E2AP/RAN_FUNCTION/CUSTOMIZED/ran_func_mac.c b/openair2/E2AP/RAN_FUNCTION/CUSTOMIZED/ran_func_mac.c
+index ef580bf..591440c 100644
+--- a/openair2/E2AP/RAN_FUNCTION/CUSTOMIZED/ran_func_mac.c
++++ b/openair2/E2AP/RAN_FUNCTION/CUSTOMIZED/ran_func_mac.c
+@@ -19,6 +19,8 @@ bool read_mac_sm(void* data)
+ 
+   mac->msg.tstamp = time_now_us();
+ 
++  gNB_MAC_INST *mac_inst = RC.nrmac[0];
++  NR_SCHED_LOCK(&mac_inst->sched_lock);
+   NR_UEs_t *UE_info = &RC.nrmac[mod_id]->UE_info;
+   size_t num_ues = 0;
+   UE_iterator(UE_info->connected_ue_list, ue) {
+@@ -32,8 +34,6 @@ bool read_mac_sm(void* data)
+     assert(mac->msg.ue_stats != NULL && "Memory exhausted" );
+   }
+ 
+-  gNB_MAC_INST *mac_inst = RC.nrmac[0];
+-  NR_SCHED_LOCK(&mac_inst->sched_lock);
+   size_t i = 0; //TODO
+   UE_iterator(UE_info->connected_ue_list, UE) {
+     const NR_UE_sched_ctrl_t* sched_ctrl = &UE->UE_sched_ctrl;
+@@ -107,11 +107,175 @@ void read_mac_setup_sm(void* data)
+   assert(0 !=0 && "Not supported");
+ }
+ 
+-sm_ag_if_ans_t write_ctrl_mac_sm(void const* data)
++/* Included by ran_func_mac.c; the existing E2 agent invokes this callback. */
++#include "intent_mcs_policy.h"
++#include <fcntl.h>
++#include <sys/stat.h>
++#include <unistd.h>
++
++#include "openair2/LAYER2/NR_MAC_gNB/intent_prb_policy.h"
++
++static sm_ag_if_ans_t write_ctrl_prb_policy(mac_ctrl_req_data_t const *request)
+ {
+-  assert(data != NULL);
+-  printf("write_ctrl callback for MAC SM: operation not supported\n");
+-  sm_ag_if_ans_t ans = {0};
++  sm_ag_if_ans_t ans = {.type = CTRL_OUTCOME_SM_AG_IF_ANS_V0};
++  ans.ctrl_out.type = MAC_AGENT_IF_CTRL_ANS_V0;
++  gNB_MAC_INST *mac = RC.nrmac ? RC.nrmac[0] : NULL;
++  if (!mac)
++    return ans;
++  uint32_t key = request->hdr.dummy;
++  uint32_t word = request->msg.action;
++  unsigned op = word >> 24;
++  unsigned token = (word >> 7) & INTENT_PRB_TOKEN_MASK;
++  unsigned sst = key >> 24;
++  unsigned sd = key & 0xffffffu;
++  unsigned matched = 0, users = 0;
++  char ue_json[4096] = "";
++  size_t used = 0;
++  bool applied, before_enabled = false;
++  unsigned before_percent = 100, width, beams;
++  intent_prb_slice_t copy = {0};
++  NR_SCHED_LOCK(&mac->sched_lock);
++  nr_cell_sched_t *cell = &mac->cells[0];
++  NR_ServingCellConfigCommon_t *scc = cell->common_channels.ServingCellConfigCommon;
++  intent_prb_state_t *state = &cell->intent_prb;
++  if (scc)
++    state->width = NRRIV2BW(scc->downlinkConfigCommon->initialDownlinkBWP->genericParameters.locationAndBandwidth,
++                           MAX_BWP_SIZE);
++  width = state->width;
++  beams = state->num_beams;
++  intent_prb_slice_t *old = intent_prb_find(state, sst, sd, false);
++  if (old) {
++    before_enabled = old->enabled;
++    before_percent = old->percent;
++  }
++  applied = scc && (op != INTENT_PRB_SET || beams == 1) && intent_prb_apply(state, key, word);
++  intent_prb_slice_t *entry = intent_prb_find(state, sst, sd, false);
++  if (entry)
++    copy = *entry;
++  UE_iterator(mac->UE_info.connected_ue_list, UE) {
++    if (UE->pcell != cell)
++      continue;
++    nssai_t ns = {0, 0xffffff};
++    for (size_t j = 0; j < seq_arr_size(&UE->UE_sched_ctrl.lc_config); ++j) {
++      const nr_lc_config_t *lc = seq_arr_at(&UE->UE_sched_ctrl.lc_config, j);
++      if (lc->lcid >= 4) {
++        ns = lc->nssai;
++        break;
++      }
++    }
++    if (ns.sst == sst && ns.sd == sd)
++      matched++;
++    char item[160];
++    int len = snprintf(item, sizeof(item), "%s{\"rnti\":%u,\"sst\":%u,\"sd\":\"%06x\",\"bwp_prbs\":%u}",
++                       used ? "," : "", UE->rnti, ns.sst, ns.sd, UE->current_DL_BWP.BWPSize);
++    if (len > 0 && used + (size_t)len < sizeof(ue_json)) {
++      memcpy(ue_json + used, item, len + 1);
++      used += len;
++    }
++    users++;
++  }
++  NR_SCHED_UNLOCK(&mac->sched_lock);
++
++  const char *directory = getenv("OAI_E2_CONTROL_STATE_DIR");
++  if (!directory)
++    directory = "/run/oran-du-e2-control";
++  char temporary[512], target[512];
++  int a = snprintf(temporary, sizeof(temporary), "%s/prb.%d.tmp", directory, getpid());
++  int b = snprintf(target, sizeof(target), "%s/prb.json", directory);
++  if (a < 0 || b < 0 || (size_t)a >= sizeof(temporary) || (size_t)b >= sizeof(target))
++    return ans;
++  int fd = open(temporary, O_WRONLY | O_CREAT | O_TRUNC | O_NOFOLLOW, 0644);
++  if (fd >= 0) {
++    int written = dprintf(fd,
++      "{\"schema\":1,\"pid\":%d,\"token\":%u,\"op\":%u,\"ok\":%s,\"sst\":%u,\"sd\":\"%06x\","
++      "\"enabled\":%s,\"max_prb_percent\":%u,\"before_enabled\":%s,\"before_percent\":%u,"
++      "\"revision\":%llu,\"bwp_prbs\":%u,\"num_beams\":%u,\"limit_prbs\":%u,\"matched_users\":%u,\"users\":%u,"
++      "\"new_grants\":%llu,\"new_prbs\":%llu,\"retx_prbs\":%llu,\"control_prbs\":%llu,"
++      "\"limited_requests\":%llu,\"guard_rejections\":%llu,\"violations\":%llu,\"peak_new_prbs\":%u,\"limit_at_peak\":%u,"
++      "\"ue_slices\":[%s],\"timestamp_us\":%lld}\n",
++      getpid(), token, op, applied ? "true" : "false", sst, sd,
++      copy.enabled ? "true" : "false", copy.used ? copy.percent : 100,
++      before_enabled ? "true" : "false", before_percent,
++      (unsigned long long)copy.revision, width, beams, width * (copy.enabled ? copy.percent : 100u) / 100u, matched, users,
++      (unsigned long long)copy.new_grants, (unsigned long long)copy.new_prbs,
++      (unsigned long long)copy.retx_prbs, (unsigned long long)copy.control_prbs,
++      (unsigned long long)copy.limited_requests, (unsigned long long)copy.guard_rejections,
++      (unsigned long long)copy.violations, copy.peak_new_prbs, copy.limit_at_peak, ue_json, (long long)time_now_us());
++    bool saved = written > 0 && fsync(fd) == 0;
++    close(fd);
++    if (!saved || rename(temporary, target) != 0)
++      unlink(temporary);
++  }
++  printf("[E2-PRB] token=%u op=%u applied=%d sst=%u sd=%06x percent=%u enabled=%d revision=%llu\n",
++         token, op, applied, sst, sd, copy.percent, copy.enabled, (unsigned long long)copy.revision);
+   return ans;
+ }
+ 
++sm_ag_if_ans_t write_ctrl_mac_sm(void const *data)
++{
++  static uint64_t revision;
++  sm_ag_if_ans_t ans = {.type = CTRL_OUTCOME_SM_AG_IF_ANS_V0};
++  ans.ctrl_out.type = MAC_AGENT_IF_CTRL_ANS_V0;
++  if (!data)
++    return ans;
++  const mac_ctrl_req_data_t *request = data;
++  if (intent_prb_is_command(request->msg.action))
++    return write_ctrl_prb_policy(request);
++  if (request->hdr.dummy != INTENT_MCS_MAGIC) {
++    printf("[E2-MCS] Unsupported MAC control header; scheduler unchanged\n");
++    return ans;
++  }
++  gNB_MAC_INST *mac = RC.nrmac ? RC.nrmac[0] : NULL;
++  if (!mac)
++    return ans;
++
++  uint32_t word = request->msg.action;
++  unsigned token = (word >> 6) & INTENT_MCS_TOKEN_MASK;
++  unsigned op = word >> 30;
++  unsigned before, after, minimum;
++  bool applied;
++  uint64_t bytes = 0;
++  unsigned users = 0;
++  NR_SCHED_LOCK(&mac->sched_lock);
++  nr_cell_sched_t *cell = &mac->cells[0];
++  before = cell->dl_bler.max_mcs;
++  minimum = cell->dl_bler.min_mcs;
++  applied = cell->common_channels.ServingCellConfigCommon != NULL
++            && intent_mcs_apply(request->hdr.dummy, word, minimum, &cell->dl_bler.max_mcs);
++  after = cell->dl_bler.max_mcs;
++  if (applied && op == INTENT_MCS_SET)
++    revision++;
++  uint64_t current_revision = revision;
++  UE_iterator(mac->UE_info.connected_ue_list, UE) {
++    if (UE->pcell == cell) {
++      users++;
++      bytes += UE->mac_stats.dl.total_bytes;
++    }
++  }
++  NR_SCHED_UNLOCK(&mac->sched_lock);
++
++  const char *directory = getenv("OAI_E2_CONTROL_STATE_DIR");
++  if (!directory)
++    directory = "/run/oran-du-e2-control";
++  char temporary[512], target[512];
++  int temporary_len = snprintf(temporary, sizeof(temporary), "%s/state.%d.tmp", directory, getpid());
++  int target_len = snprintf(target, sizeof(target), "%s/state.json", directory);
++  if (temporary_len < 0 || (size_t)temporary_len >= sizeof(temporary)
++      || target_len < 0 || (size_t)target_len >= sizeof(target))
++    return ans;
++  int fd = open(temporary, O_WRONLY | O_CREAT | O_TRUNC | O_NOFOLLOW, 0644);
++  if (fd >= 0) {
++    int written = dprintf(fd,
++        "{\"schema\":1,\"pid\":%d,\"token\":%u,\"op\":%u,\"ok\":%s,"
++        "\"before\":%u,\"dl_max_mcs\":%u,\"dl_min_mcs\":%u,\"cell_index\":0,"
++        "\"users\":%u,\"dl_bytes\":%llu,\"revision\":%llu,\"timestamp_us\":%lld}\n",
++        getpid(), token, op, applied ? "true" : "false", before, after, minimum,
++        users, (unsigned long long)bytes, (unsigned long long)current_revision, (long long)time_now_us());
++    bool saved = written > 0 && fsync(fd) == 0;
++    close(fd);
++    if (!saved || rename(temporary, target) != 0)
++      unlink(temporary);
++  }
++  printf("[E2-MCS] token=%u op=%u applied=%d cell=0 before=%u current=%u\n", token, op, applied, before, after);
++  return ans;
++}
+diff --git a/openair2/LAYER2/NR_MAC_gNB/gNB_scheduler_dlsch.c b/openair2/LAYER2/NR_MAC_gNB/gNB_scheduler_dlsch.c
+index 0a192c0..9e94fff 100644
+--- a/openair2/LAYER2/NR_MAC_gNB/gNB_scheduler_dlsch.c
++++ b/openair2/LAYER2/NR_MAC_gNB/gNB_scheduler_dlsch.c
+@@ -680,6 +680,10 @@ bool nr_dl_validate_cce_pucch(const nr_dl_sched_params_t *params, nr_dl_candidat
+ // have already been set. Returns false if validation fails (UE should be skipped).
+ bool commit_alloc(const nr_dl_sched_params_t *params, nr_dl_candidate_t *cand)
+ {
++  intent_prb_state_t *quota = &params->cell->intent_prb;
++  intent_prb_slice_t *slice = intent_prb_find(quota, cand->nssai.sst, cand->nssai.sd, true);
++  if (!intent_prb_can_commit(quota, slice, cand->is_retx, cand->pending_bytes > 0, cand->sched_pdsch.rbSize))
++    return false;
+   if (!nr_dl_validate_cce_pucch(params, cand))
+     return false;
+ 
+@@ -695,6 +699,7 @@ bool commit_alloc(const nr_dl_sched_params_t *params, nr_dl_candidate_t *cand)
+   uint16_t *vrb_map = params->vrb_map[beam];
+   for (int rb = 0; rb < cand->sched_pdsch.rbSize; rb++)
+     vrb_map[cand->sched_pdsch.rbStart + rb + cand->bwp_start] |= cand->alloc_slbitmap;
++  intent_prb_account(quota, slice, cand->is_retx, cand->pending_bytes > 0, cand->sched_pdsch.rbSize);
+ 
+   return true;
+ }
+@@ -725,6 +730,11 @@ static void nr_dl_schedule(gNB_MAC_INST *mac,
+   NR_ServingCellConfigCommon_t *scc = cell->common_channels.ServingCellConfigCommon;
+   int slots_per_frame = cell->frame_structure.numb_slots_frame;
+ 
++  cell->intent_prb.num_beams = num_beams;
++  unsigned quota_width = NRRIV2BW(scc->downlinkConfigCommon->initialDownlinkBWP->genericParameters.locationAndBandwidth,
++                                  MAX_BWP_SIZE);
++  intent_prb_begin_slot(&cell->intent_prb, frame, slot, quota_width);
++
+   /* Step 1: Collect candidates */
+   nr_dl_candidate_t candidates[MAX_MOBILES_PER_GNB] = {0};
+   int n = collect_dl_candidates(cell, UE_list, candidates, MAX_MOBILES_PER_GNB, frame, slot);
+diff --git a/openair2/LAYER2/NR_MAC_gNB/gNB_scheduler_dlsch_default_policies.c b/openair2/LAYER2/NR_MAC_gNB/gNB_scheduler_dlsch_default_policies.c
+index cbe7e2b..a17e760 100644
+--- a/openair2/LAYER2/NR_MAC_gNB/gNB_scheduler_dlsch_default_policies.c
++++ b/openair2/LAYER2/NR_MAC_gNB/gNB_scheduler_dlsch_default_policies.c
+@@ -306,6 +306,17 @@ int nr_dl_proportional_fair(const nr_dl_sched_params_t *params, nr_dl_candidate_
+     }
+     int rbStart, rbSize;
+     uint16_t *vrb_map = params->vrb_map[cand->alloc_beam_idx];
++    intent_prb_state_t *quota = &params->cell->intent_prb;
++    intent_prb_slice_t *slice = intent_prb_find(quota, cand->nssai.sst, cand->nssai.sd, false);
++    if (slice && slice->enabled) {
++      int remaining = intent_prb_remaining(quota, slice);
++      if (rb_req > remaining) {
++        slice->limited_requests++;
++        rb_req = remaining;
++      }
++      if (rb_req < min_rbSize)
++        continue;
++    }
+     if (!get_rb_alloc(min_rbSize, rb_req, cand->bwp_start, cand->bwp_size, vrb_map, cand->alloc_slbitmap, &rbStart, &rbSize))
+       continue;
+ 
+diff --git a/openair2/LAYER2/NR_MAC_gNB/nr_mac_gNB.h b/openair2/LAYER2/NR_MAC_gNB/nr_mac_gNB.h
+index 38c3256..cf07f40 100644
+--- a/openair2/LAYER2/NR_MAC_gNB/nr_mac_gNB.h
++++ b/openair2/LAYER2/NR_MAC_gNB/nr_mac_gNB.h
+@@ -11,6 +11,8 @@
+ #ifndef __LAYER2_NR_MAC_GNB_H__
+ #define __LAYER2_NR_MAC_GNB_H__
+ 
++#include "intent_prb_policy.h"
++
+ #include <stdio.h>
+ #include <stdlib.h>
+ #include <string.h>
+@@ -1306,6 +1308,7 @@ typedef struct nr_cell_sched_s {
+   nr_mac_config_t radio_config;
+ 
+   /// BLER control thresholds for the default MCS-adaptation policy
++  intent_prb_state_t intent_prb; ///< E2-configured per-slice DL new-transmission ceilings
+   NR_bler_options_t dl_bler;
+   NR_bler_options_t ul_bler;
+ 
+diff --git a/openair3/NAS/NR_UE/nr_nas_msg.c b/openair3/NAS/NR_UE/nr_nas_msg.c
+index 1929380..8d277aa 100644
+--- a/openair3/NAS/NR_UE/nr_nas_msg.c
++++ b/openair3/NAS/NR_UE/nr_nas_msg.c
+@@ -2283,10 +2283,14 @@ static void generatePduSessionEstablishRequest(nr_ue_nas_t *nas, as_nas_info_t *
+   size += 1 + 1 + nssai_len;
+   int dnnSize = strlen(pdu_req->dnn);
+   mm_msg->dnn.value = calloc(1, dnnSize + 1);
+-  mm_msg->dnn.length = dnnSize + 1;
+-  mm_msg->dnn.value[0] = dnnSize;
+-  memcpy(mm_msg->dnn.value + 1, pdu_req->dnn, dnnSize);
+-  size += (1 + 1 + dnnSize + 1);
++  /* NOTE(patched): OAI 5GC v2.0.0 的 AMF 不会把 APN 式（长度前缀）编码的 DNN 还原成
++   * 点分字符串，而是原样透传给 SMF（日志里出现 "Requested DNN: \x07default"），
++   * 导致 SMF 查不到 DNN 订阅、PDU Session Establishment 被拒。
++   * 这里改成发送不带长度前缀的裸字符串，AMF/SMF 可直接匹配 "default"。
++   * 换用较新 AMF（>=v2.2.x）时可回退成 APN 式编码。 */
++  mm_msg->dnn.length = dnnSize;
++  memcpy(mm_msg->dnn.value, pdu_req->dnn, dnnSize);
++  size += (1 + 1 + dnnSize);
+ 
+   // encode the message
+   initialNasMsg->nas_data = malloc_or_fail(size * sizeof(*initialNasMsg->nas_data));
+diff --git a/tests/nrdlbench/CMakeLists.txt b/tests/nrdlbench/CMakeLists.txt
+index 6dd2a98..d316dbf 100644
+--- a/tests/nrdlbench/CMakeLists.txt
++++ b/tests/nrdlbench/CMakeLists.txt
+@@ -20,3 +20,7 @@ if(ENABLE_TESTS)
+   add_test(NAME nr_dlbench_am_functional_test
+            COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/nr-dlbench-functional-test.sh $<TARGET_FILE:nr_dlbench> -A 50)
+ endif()
++
++if(E2_AGENT STREQUAL "ON")
++  target_sources(nr_dlbench PRIVATE ${CMAKE_SOURCE_DIR}/openair2/E2AP/RAN_FUNCTION/setup_msg_store.c)
++endif()
+diff --git a/tests/nrdlbench/dlbench.c b/tests/nrdlbench/dlbench.c
+index 287b449..4a675f7 100644
+--- a/tests/nrdlbench/dlbench.c
++++ b/tests/nrdlbench/dlbench.c
+@@ -94,6 +94,7 @@ static inline double timespec_diff_us(struct timespec *start, struct timespec *e
+ }
+ 
+ static int bench_target_mcs = 28;
++static int bench_prb_percent;
+ static int bench_target_layers = 1;
+ /* AM mode: depth of the gNB's AM RX reorder window (out-of-order PDUs buffered
+  * behind a missing head SN). 0 = UM mode (DL-buffer benchmark, the default). */
+@@ -231,7 +232,7 @@ int main(int argc, char **argv)
+ 
+   int c;
+   /* keep options in alphabetical order */
+-  while ((c = getopt(argc, argv, "--:O:A:B:e:L:m:n:PR:u:X:Z:h")) != -1) {
++  while ((c = getopt(argc, argv, "--:O:A:B:e:L:m:n:PQ:R:u:X:Z:h")) != -1) {
+     if (c == 1 || c == '-' || c == 'O')
+       continue;
+     switch (c) {
+@@ -257,6 +258,10 @@ int main(int argc, char **argv)
+         print_perf = 1;
+         cpu_meas_enabled = 1;
+         break;
++      case 'Q':
++        bench_prb_percent = atoi(optarg);
++        if (bench_prb_percent < 0 || bench_prb_percent > 100) return 2;
++        break;
+       case 'R':
+         N_RB_DL = atoi(optarg);
+         break;
+@@ -280,6 +285,7 @@ int main(int argc, char **argv)
+         printf("  -m <numerology>  Numerology index (default 1 = 30kHz)\n");
+         printf("  -n <num_slots>   Number of DL slots to benchmark (default 100)\n");
+         printf("  -P               Print PHY performance counters\n");
++        printf("  -Q <percent>     Shared slice 3/000003 new-transmission PRB ceiling (0=off)\n");
+         printf("  -R <N_RB_DL>     Number of DL resource blocks (default 106)\n");
+         printf("  -u <num_ues>     Number of UEs (default 1, max %d)\n", MAX_MOBILES_PER_GNB);
+         printf("  -X <threads>     gNB thread pool config (default 'n' = no threads)\n");
+@@ -436,10 +442,24 @@ int main(int argc, char **argv)
+     /* Set UE channel quality so the scheduler picks a high MCS */
+     NR_UE_sched_ctrl_t *sc = &UE_info->UE_sched_ctrl;
+     sc->dl_max_mcs = bench_target_mcs;
++    if (bench_prb_percent) {
++      for (int i = 0; i < seq_arr_size(&sc->lc_config); ++i) {
++        nr_lc_config_t *lc = seq_arr_at(&sc->lc_config, i);
++        if (lc->lcid >= 4)
++          lc->nssai = (nssai_t){3, 3};
++      }
++    }
+ 
+     printf("  UE %3d: rnti=%04x, BWP size=%d\n", u, rnti, UE_info->current_DL_BWP.BWPSize);
+   }
+ 
++  if (bench_prb_percent) {
++    cell->intent_prb.width = N_RB_DL;
++    if (!intent_prb_apply(&cell->intent_prb, intent_prb_key(3, 3), intent_prb_word(INTENT_PRB_SET, 1, bench_prb_percent))) {
++      fprintf(stderr, "PRB ceiling too small for the scheduler minimum grant\n");
++      return 2;
++    }
++  }
+   /* ── 7. Init thread pool ── */
+   initNamedTpool(gNBthreads, &gNB->threadPool, true, "gNB-tpool");
+   initNotifiedFIFO(&gNB->L1_tx_out);
+@@ -664,6 +684,16 @@ int main(int argc, char **argv)
+     printf("  ---------------------------------------------------------------------------\n");
+   }
+ 
++  if (bench_prb_percent) {
++    intent_prb_slice_t *q = intent_prb_find(&cell->intent_prb, 3, 3, false);
++    printf("PRB_QUOTA percent=%d limit=%u peak=%u grants=%llu prbs=%llu retx=%llu hits=%llu violations=%llu\n",
++           bench_prb_percent, intent_prb_limit(&cell->intent_prb, q), q->peak_new_prbs,
++           (unsigned long long)q->new_grants, (unsigned long long)q->new_prbs,
++           (unsigned long long)q->retx_prbs, (unsigned long long)q->limited_requests,
++           (unsigned long long)q->violations);
++    if (!q->new_grants || !q->limited_requests || q->violations || q->peak_new_prbs > q->limit_at_peak)
++      return 3;
++  }
+   /* ── Cleanup ── */
+   if (csv) fclose(csv);
+   free(t_sched);

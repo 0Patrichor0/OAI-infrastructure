@@ -1,0 +1,35 @@
+# MinIO 开源版已于 2025-10 归档（Docker Hub / dl.min.io / quay 全部下线），
+# 这里用 SeaweedFS 提供同样的 S3 API（端口 9000、静态凭据与 .env 一致），
+# 并把 minio-init（原本用 mc）换成 boto3 建 bucket。
+services:
+  minio:
+    image: chrislusf/seaweedfs:latest
+    command:
+      - server
+      - -dir=/data
+      - -s3
+      - -s3.port=9000
+      - -s3.config=/etc/sw/s3.json
+      - -master.port=9333
+      - -filer
+      - -ip=192.168.74.171
+      - -ip.bind=0.0.0.0
+    ports:
+      - "9000:9000"
+      - "9011:9333"
+      - "9012:8888"   # SeaweedFS filer 文件浏览器（桶内容直接网页浏览）
+    volumes:
+      - minio_data:/data
+      - ./_vendor/seaweedfs-s3.json:/etc/sw/s3.json:ro
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sf http://localhost:9333/cluster/status >/dev/null || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 20s
+
+  minio-init:
+    image: python:3.10-slim
+    entrypoint: ["/bin/sh", "-c", "pip install -q boto3 && python /init_buckets.py"]
+    volumes:
+      - ./_vendor/init_buckets.py:/init_buckets.py:ro

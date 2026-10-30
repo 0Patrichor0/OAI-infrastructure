@@ -1,0 +1,310 @@
+[
+  {
+    "tags": [
+      "mtlf-nwdaf-ml-provision:latest"
+    ],
+    "digests": [
+      "mtlf-nwdaf-ml-provision@sha256:794c31b9ca2ad3fef4530817fbfc17d0d671f53b40e3e8647674099804601176"
+    ],
+    "id": "sha256:794c31b9ca2ad3fef4530817fbfc17d0d671f53b40e3e8647674099804601176"
+  },
+  {
+    "tags": [
+      "mtlf-nwdaf-ml-training:latest"
+    ],
+    "digests": [
+      "mtlf-nwdaf-ml-training@sha256:fb6cc667228d9f55a449c0743e55ed9f1be6843b78cd5089c211608125a78d8b"
+    ],
+    "id": "sha256:fb6cc667228d9f55a449c0743e55ed9f1be6843b78cd5089c211608125a78d8b"
+  },
+  {
+    "tags": [
+      "mtlf-ai-fabric:latest"
+    ],
+    "digests": [
+      "mtlf-ai-fabric@sha256:f3b0998135d2fbdbf464e7bd34788683ac73c26b17dcee0ab117d7646adf0a17"
+    ],
+    "id": "sha256:f3b0998135d2fbdbf464e7bd34788683ac73c26b17dcee0ab117d7646adf0a17"
+  },
+  {
+    "tags": [
+      "oai-nwdaf-sbi:latest"
+    ],
+    "digests": [
+      "oai-nwdaf-sbi@sha256:8f2e3deaee9aa7ac5eabc8d330bba64bf77a4fed9b1dfb0944b224d31b71af60"
+    ],
+    "id": "sha256:8f2e3deaee9aa7ac5eabc8d330bba64bf77a4fed9b1dfb0944b224d31b71af60"
+  },
+  {
+    "tags": [
+      "oai-nwdaf-engine-ads:latest"
+    ],
+    "digests": [
+      "oai-nwdaf-engine-ads@sha256:a423058a1d4a37e36714d65551ea7a8627986121399feebb6dc0793593944536"
+    ],
+    "id": "sha256:a423058a1d4a37e36714d65551ea7a8627986121399feebb6dc0793593944536"
+  },
+  {
+    "tags": [
+      "oai-nwdaf-engine:latest"
+    ],
+    "digests": [
+      "oai-nwdaf-engine@sha256:4a182e9355c764b64a1063c994a0f5a323a0d15891059c610e687142d08a2723"
+    ],
+    "id": "sha256:4a182e9355c764b64a1063c994a0f5a323a0d15891059c610e687142d08a2723"
+  },
+  {
+    "tags": [
+      "oai-nwdaf-nbi-ml:latest"
+    ],
+    "digests": [
+      "oai-nwdaf-nbi-ml@sha256:b263b9ce2da0e9189c5c74075006736df4fcb78a95b98d6f19088e97cdc653f4"
+    ],
+    "id": "sha256:b263b9ce2da0e9189c5c74075006736df4fcb78a95b98d6f19088e97cdc653f4"
+  },
+  {
+    "tags": [
+      "oai-nwdaf-nbi-events:latest"
+    ],
+    "digests": [
+      "oai-nwdaf-nbi-events@sha256:8cdbecb985f40b3882817af0ee49b80f64145e308699d00868b9e290ef50ac43"
+    ],
+    "id": "sha256:8cdbecb985f40b3882817af0ee49b80f64145e308699d00868b9e290ef50ac43"
+  },
+  {
+    "tags": [
+      "oai-nwdaf-nbi-analytics:latest"
+    ],
+    "digests": [
+      "oai-nwdaf-nbi-analytics@sha256:ecdb8a25a92607e9a624385d6ece40077a0dcb2dd353d35ea3a39b7b0eb89869"
+    ],
+    "id": "sha256:ecdb8a25a92607e9a624385d6ece40077a0dcb2dd353d35ea3a39b7b0eb89869"
+  },
+  {
+    "tags": [
+      "mongo:7.0"
+    ],
+    "digests": [
+      "mongo@sha256:c53852c00c23ca9f23fc39690350ffa9a80e3642fe8f96879726d8da0abe80a7"
+    ],
+    "id": "sha256:c53852c00c23ca9f23fc39690350ffa9a80e3642fe8f96879726d8da0abe80a7"
+  },
+  {
+    "tags": [
+      "mongo:latest"
+    ],
+    "digests": [
+      "mongo@sha256:dc28ed5a9d0fc616903c3f463bb1e53b92b49f441721b91926e87d90bf957ce8"
+    ],
+    "id": "sha256:dc28ed5a9d0fc616903c3f463bb1e53b92b49f441721b91926e87d90bf957ce8"
+  },
+  {
+    "tags": [
+      "kong:latest"
+    ],
+    "digests": [
+      "kong@sha256:aa4a4687b1330e427ad0d3b27a0606b833894297c78abf1a212edc9ba73c8620"
+    ],
+    "id": "sha256:aa4a4687b1330e427ad0d3b27a0606b833894297c78abf1a212edc9ba73c8620"
+  },
+  {
+    "tags": [
+      "versity/versitygw:latest"
+    ],
+    "digests": [
+      "versity/versitygw@sha256:eb7f786fcd91e72194e48fcf1ac16302d686bf8e3a71434bdbc067a6efd3fdc7"
+    ],
+    "id": "sha256:eb7f786fcd91e72194e48fcf1ac16302d686bf8e3a71434bdbc067a6efd3fdc7"
+  },
+  {
+    "tags": [
+      "localstack/localstack:latest"
+    ],
+    "digests": [
+      "localstack/localstack@sha256:aa5632e041ca54ff61a0a25e17b1c898b09a1eb7f611bfc05f73ef53b7266872"
+    ],
+    "id": "sha256:aa5632e041ca54ff61a0a25e17b1c898b09a1eb7f611bfc05f73ef53b7266872"
+  },
+  {
+    "tags": [
+      "rclone/rclone:latest"
+    ],
+    "digests": [
+      "rclone/rclone@sha256:2687085f718d3c628f7fdfb77c52a1d344332aed543110bb88088f2c70d43eb5"
+    ],
+    "id": "sha256:2687085f718d3c628f7fdfb77c52a1d344332aed543110bb88088f2c70d43eb5"
+  },
+  {
+    "tags": [
+      "python:3.10-slim"
+    ],
+    "digests": [
+      "python@sha256:6ff506466f8b1e981719b468cc0023b8ef000b983cdec0eafe119d01f379e31d"
+    ],
+    "id": "sha256:6ff506466f8b1e981719b468cc0023b8ef000b983cdec0eafe119d01f379e31d"
+  },
+  {
+    "tags": [
+      "chrislusf/seaweedfs:latest"
+    ],
+    "digests": [
+      "chrislusf/seaweedfs@sha256:4e61d15fd35994cb1e43e1e553dff106794841fd9a99ade2fc8c8bfce4d7872d"
+    ],
+    "id": "sha256:4e61d15fd35994cb1e43e1e553dff106794841fd9a99ade2fc8c8bfce4d7872d"
+  },
+  {
+    "tags": [
+      "postgres:15-alpine"
+    ],
+    "digests": [
+      "postgres@sha256:f7d23353e1b15400d22ebe31189f4d314b87a4c129cc400c8c2d8d4ca127bf81"
+    ],
+    "id": "sha256:f7d23353e1b15400d22ebe31189f4d314b87a4c129cc400c8c2d8d4ca127bf81"
+  },
+  {
+    "tags": [
+      "mysql:8.0"
+    ],
+    "digests": [
+      "mysql@sha256:7dcddc01f13bab2f15cde676d44d01f61fc9f99fe7785e86196dfc07d358ae2b"
+    ],
+    "id": "sha256:7dcddc01f13bab2f15cde676d44d01f61fc9f99fe7785e86196dfc07d358ae2b"
+  },
+  {
+    "tags": [
+      "hello-world:latest"
+    ],
+    "digests": [
+      "hello-world@sha256:11a3eb1597e864c51b3f56733cb2e8a90bf0c284bfc05f9444d81c558bc848aa"
+    ],
+    "id": "sha256:11a3eb1597e864c51b3f56733cb2e8a90bf0c284bfc05f9444d81c558bc848aa"
+  },
+  {
+    "tags": [
+      "alphamaz/milano-lstm-traffic-forecasting:latest"
+    ],
+    "digests": [
+      "alphamaz/milano-lstm-traffic-forecasting@sha256:e4cd5502c8f88f3fb7466245a378b41fd699eca0e44c7252030a599200c5a435"
+    ],
+    "id": "sha256:e4cd5502c8f88f3fb7466245a378b41fd699eca0e44c7252030a599200c5a435"
+  },
+  {
+    "tags": [
+      "alphamaz/lstm-milano-ad:v2.0"
+    ],
+    "digests": [
+      "alphamaz/lstm-milano-ad@sha256:4e0f2cffbab2896ecb64f61520b1c3bacece54568df1549b6bbb8ed30637786a"
+    ],
+    "id": "sha256:4e0f2cffbab2896ecb64f61520b1c3bacece54568df1549b6bbb8ed30637786a"
+  },
+  {
+    "tags": [
+      "oaisoftwarealliance/trf-gen-cn5g:latest"
+    ],
+    "digests": [
+      "oaisoftwarealliance/trf-gen-cn5g@sha256:3f9ab2e401d2a010b568e78db087b5d1526b8756f1056087939116f6138340a6"
+    ],
+    "id": "sha256:3f9ab2e401d2a010b568e78db087b5d1526b8756f1056087939116f6138340a6"
+  },
+  {
+    "tags": [
+      "alpine:3.18"
+    ],
+    "digests": [
+      "alpine@sha256:de0eb0b3f2a47ba1eb89389859a9bd88b28e82f5826b6969ad604979713c2d4f"
+    ],
+    "id": "sha256:de0eb0b3f2a47ba1eb89389859a9bd88b28e82f5826b6969ad604979713c2d4f"
+  },
+  {
+    "tags": [
+      "oaisoftwarealliance/oai-udr:v2.0.0"
+    ],
+    "digests": [
+      "oaisoftwarealliance/oai-udr@sha256:e40d34920460c74384587e52c5c4695334351faac051f6b31a006f32bdaf7145"
+    ],
+    "id": "sha256:e40d34920460c74384587e52c5c4695334351faac051f6b31a006f32bdaf7145"
+  },
+  {
+    "tags": [
+      "oaisoftwarealliance/oai-smf:v2.0.0"
+    ],
+    "digests": [
+      "oaisoftwarealliance/oai-smf@sha256:f725ca008dbb21d37d250f48e7975f06e776c4a7d568b8be8c0c17d5c0bae8a7"
+    ],
+    "id": "sha256:f725ca008dbb21d37d250f48e7975f06e776c4a7d568b8be8c0c17d5c0bae8a7"
+  },
+  {
+    "tags": [
+      "oaisoftwarealliance/oai-nrf:v2.0.0"
+    ],
+    "digests": [
+      "oaisoftwarealliance/oai-nrf@sha256:8d561faf9a132d4ebcdb3738a72911f6613b3daf90f284a9fa1149cc99fc63d7"
+    ],
+    "id": "sha256:8d561faf9a132d4ebcdb3738a72911f6613b3daf90f284a9fa1149cc99fc63d7"
+  },
+  {
+    "tags": [
+      "oaisoftwarealliance/oai-amf:v2.0.0"
+    ],
+    "digests": [
+      "oaisoftwarealliance/oai-amf@sha256:e481c6c30f9b2e7763697f9ed1235bbb326aa9ab28ea48d2504e96181663b76e"
+    ],
+    "id": "sha256:e481c6c30f9b2e7763697f9ed1235bbb326aa9ab28ea48d2504e96181663b76e"
+  },
+  {
+    "tags": [
+      "oaisoftwarealliance/oai-udm:v2.0.0"
+    ],
+    "digests": [
+      "oaisoftwarealliance/oai-udm@sha256:322838eb43558092168a11801dda7ff14db507d81e05c626dfe2d0a1da72d1bc"
+    ],
+    "id": "sha256:322838eb43558092168a11801dda7ff14db507d81e05c626dfe2d0a1da72d1bc"
+  },
+  {
+    "tags": [
+      "oaisoftwarealliance/oai-ausf:v2.0.0"
+    ],
+    "digests": [
+      "oaisoftwarealliance/oai-ausf@sha256:e4f211d9cc88a53274a5c04d89315ba8c44f661de6125b27796baec964e21c2c"
+    ],
+    "id": "sha256:e4f211d9cc88a53274a5c04d89315ba8c44f661de6125b27796baec964e21c2c"
+  },
+  {
+    "tags": [
+      "golang:1.19-alpine"
+    ],
+    "digests": [
+      "golang@sha256:0ec0646e208ea58e5d29e558e39f2e59fccf39b7bda306cb53bbaff91919eca5"
+    ],
+    "id": "sha256:0ec0646e208ea58e5d29e558e39f2e59fccf39b7bda306cb53bbaff91919eca5"
+  },
+  {
+    "tags": [
+      "gnbsim:latest",
+      "rohankharade/gnbsim:latest"
+    ],
+    "digests": [
+      "gnbsim@sha256:f78e49a9d42869e35c373069fc8c4bb94f526b6df35e659e6d2e7079f063c483",
+      "rohankharade/gnbsim@sha256:f78e49a9d42869e35c373069fc8c4bb94f526b6df35e659e6d2e7079f063c483"
+    ],
+    "id": "sha256:f78e49a9d42869e35c373069fc8c4bb94f526b6df35e659e6d2e7079f063c483"
+  },
+  {
+    "tags": [
+      "oaisoftwarealliance/oai-upf-vpp:v2.0.0"
+    ],
+    "digests": [
+      "oaisoftwarealliance/oai-upf-vpp@sha256:86e619b0170be9677a60875414eb2dbc7664ba217c947d5d0eb9bf1e5699c075"
+    ],
+    "id": "sha256:86e619b0170be9677a60875414eb2dbc7664ba217c947d5d0eb9bf1e5699c075"
+  },
+  {
+    "tags": [
+      "python:3.6.9-slim"
+    ],
+    "digests": [
+      "python@sha256:0f0e98b6938bab4030306c101e7f5f91e833f2f0515fcabbc9ca7f2fd5a6ece1"
+    ],
+    "id": "sha256:0f0e98b6938bab4030306c101e7f5f91e833f2f0515fcabbc9ca7f2fd5a6ece1"
+  }
+]

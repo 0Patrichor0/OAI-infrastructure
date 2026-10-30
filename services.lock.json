@@ -1,0 +1,83 @@
+{
+  "flexric-guard.service": {
+    "enabled": false
+  },
+  "flexric-ric.service": {
+    "enabled": true
+  },
+  "flexric-xapp-gtp-mac.service": {
+    "enabled": true
+  },
+  "flexric-xapp-kpm.service": {
+    "enabled": true
+  },
+  "intent-state-apply.service": {
+    "enabled": false
+  },
+  "intent-ui.service": {
+    "enabled": true
+  },
+  "nwdaf-deployment-watchdog.service": {
+    "enabled": false
+  },
+  "nwdaf-gnbsim-keepalive.service": {
+    "enabled": false
+  },
+  "nwdaf-loop-netperf.service": {
+    "enabled": true
+  },
+  "oai-nf-watchdog.service": {
+    "enabled": false
+  },
+  "oran-cu-cp.service": {
+    "enabled": true
+  },
+  "oran-cu-up.service": {
+    "enabled": true
+  },
+  "oran-du.service": {
+    "enabled": true
+  },
+  "oran-traffic.service": {
+    "enabled": true
+  },
+  "oran-ue-watchdog.service": {
+    "enabled": false
+  },
+  "oran-ue.service": {
+    "enabled": true
+  },
+  "oran-ue2.service": {
+    "enabled": true
+  },
+  "oran-ue3.service": {
+    "enabled": true
+  },
+  "oran-ue4.service": {
+    "enabled": true
+  },
+  "xapp-kpm-watchdog.service": {
+    "enabled": false
+  },
+  "flexric-guard.timer": {
+    "enabled": true
+  },
+  "intent-state-apply.timer": {
+    "enabled": true
+  },
+  "nwdaf-deployment-watchdog.timer": {
+    "enabled": true
+  },
+  "nwdaf-gnbsim-keepalive.timer": {
+    "enabled": true
+  },
+  "oai-nf-watchdog.timer": {
+    "enabled": true
+  },
+  "oran-ue-watchdog.timer": {
+    "enabled": true
+  },
+  "xapp-kpm-watchdog.timer": {
+    "enabled": true
+  }
+}

@@ -1,0 +1,11 @@
+[Unit]
+Description=每 2 分钟把意图持久层的签约状态补进 mysql
+
+[Timer]
+OnBootSec=3min
+OnUnitActiveSec=2min
+AccuracySec=30s
+Unit=intent-state-apply.service
+
+[Install]
+WantedBy=timers.target

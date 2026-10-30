@@ -1,0 +1,18 @@
+[Unit]
+Description=FlexRIC near-RT RIC (E2 36421 / E42 36422)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Environment=FLEXRIC_STATS_LOG=0
+Type=simple
+WorkingDirectory=/home/ubuntu/oai-ran-e2/openair2/E2AP/flexric
+ExecStart=/home/ubuntu/oai-ran-e2/openair2/E2AP/flexric/build/examples/ric/nearRT-RIC -p /usr/local/lib/flexric/
+Restart=always
+RestartSec=3
+LimitNOFILE=65536
+StandardOutput=append:/home/ubuntu/oai-ran-logs/ric.log
+StandardError=append:/home/ubuntu/oai-ran-logs/ric.log
+
+[Install]
+WantedBy=multi-user.target

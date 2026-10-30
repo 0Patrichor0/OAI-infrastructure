@@ -1,0 +1,102 @@
+{
+  "AuthenticationSubscription": {
+    "columns": [
+      "ueid",
+      "authenticationMethod",
+      "encPermanentKey",
+      "protectionParameterId",
+      "sequenceNumber",
+      "authenticationManagementField",
+      "algorithmId",
+      "encOpcKey",
+      "encTopcKey",
+      "vectorGenerationInHss",
+      "n5gcAuthMethod",
+      "rgAuthenticationInd",
+      "supi"
+    ],
+    "row": {
+      "supi": "@IMSI@",
+      "ueid": "@IMSI@",
+      "encOpcKey": "@SIM_OPC@",
+      "encTopcKey": null,
+      "algorithmId": "milenage",
+      "n5gcAuthMethod": null,
+      "sequenceNumber": {
+        "sqn": "000000000020",
+        "sqnScheme": "NON_TIME_BASED",
+        "lastIndexes": {
+          "ausf": 0
+        }
+      },
+      "encPermanentKey": "@SIM_KEY@",
+      "rgAuthenticationInd": null,
+      "authenticationMethod": "5G_AKA",
+      "protectionParameterId": "0C0A34601D4F07677303652C0462535B",
+      "vectorGenerationInHss": null,
+      "authenticationManagementField": "8000"
+    }
+  },
+  "SessionManagementSubscriptionData": {
+    "columns": [
+      "ueid",
+      "servingPlmnid",
+      "singleNssai",
+      "dnnConfigurations",
+      "internalGroupIds",
+      "sharedVnGroupDataIds",
+      "sharedDnnConfigurationsId",
+      "odbPacketServices",
+      "traceData",
+      "sharedTraceDataId",
+      "expectedUeBehavioursList",
+      "suggestedPacketNumDlList",
+      "3gppChargingCharacteristics"
+    ],
+    "row": {
+      "ueid": "@IMSI@",
+      "traceData": null,
+      "singleNssai": {
+        "sd": "000005",
+        "sst": 1
+      },
+      "servingPlmnid": "20895",
+      "internalGroupIds": null,
+      "dnnConfigurations": {
+        "default": {
+          "sscModes": {
+            "defaultSscMode": "SSC_MODE_1"
+          },
+          "sessionAmbr": {
+            "uplink": "100Mbps",
+            "downlink": "100Mbps"
+          },
+          "5gQosProfile": {
+            "5qi": 9,
+            "arp": {
+              "preemptCap": "NOT_PREEMPT",
+              "preemptVuln": "NOT_PREEMPTABLE",
+              "priorityLevel": 1
+            },
+            "priorityLevel": 1
+          },
+          "pduSessionTypes": {
+            "defaultSessionType": "IPV4"
+          },
+          "staticIpAddress": [
+            {
+              "ipv4Addr": "12.1.1.4"
+            }
+          ]
+        }
+      },
+      "odbPacketServices": null,
+      "sharedTraceDataId": null,
+      "sharedVnGroupDataIds": null,
+      "expectedUeBehavioursList": null,
+      "suggestedPacketNumDlList": null,
+      "sharedDnnConfigurationsId": null,
+      "3gppChargingCharacteristics": null
+    }
+  }
+}

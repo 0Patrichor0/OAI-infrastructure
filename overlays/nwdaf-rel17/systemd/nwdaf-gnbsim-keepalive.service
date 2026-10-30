@@ -1,0 +1,7 @@
+[Unit]
+Description=Restart gnbsim-vpp if it died (keeps SMF data flowing)
+After=docker.service
+
+[Service]
+Type=oneshot
+ExecStart=/home/ubuntu/nwdaf-rel17/systemd/nwdaf-gnbsim-keepalive.sh

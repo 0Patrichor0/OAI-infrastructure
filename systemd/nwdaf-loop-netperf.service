@@ -1,0 +1,17 @@
+[Unit]
+Description=NWDAF closed loop - NETWORK_PERFORMANCE traffic forecasting (container)
+After=docker.service network-online.target
+Requires=docker.service
+Wants=network-online.target
+
+[Service]
+Type=simple
+Restart=always
+RestartSec=20
+TimeoutStopSec=40
+ExecStartPre=-/usr/bin/docker rm -f nwdaf-loop-netperf
+ExecStart=/usr/bin/docker run --rm --name nwdaf-loop-netperf --network host -v /home/ubuntu/nwdaf-rel17/examples:/examples:ro python:3.10-slim bash -c "pip install -q -r /examples/requirements.txt && cd /examples && exec python network_performance/traffic_forecasting.py"
+ExecStop=/usr/bin/docker stop -t 10 nwdaf-loop-netperf
+
+[Install]
+WantedBy=multi-user.target

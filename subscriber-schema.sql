@@ -1,0 +1,32 @@
+CREATE TABLE `AuthenticationSubscription` (
+  `ueid` varchar(20) NOT NULL,
+  `authenticationMethod` varchar(25) NOT NULL,
+  `encPermanentKey` varchar(50) DEFAULT NULL,
+  `protectionParameterId` varchar(50) DEFAULT NULL,
+  `sequenceNumber` json DEFAULT NULL,
+  `authenticationManagementField` varchar(50) DEFAULT NULL,
+  `algorithmId` varchar(50) DEFAULT NULL,
+  `encOpcKey` varchar(50) DEFAULT NULL,
+  `encTopcKey` varchar(50) DEFAULT NULL,
+  `vectorGenerationInHss` tinyint(1) DEFAULT NULL,
+  `n5gcAuthMethod` varchar(15) DEFAULT NULL,
+  `rgAuthenticationInd` tinyint(1) DEFAULT NULL,
+  `supi` varchar(20) DEFAULT NULL,
+  PRIMARY KEY (`ueid`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3;
+CREATE TABLE `SessionManagementSubscriptionData` (
+  `ueid` varchar(15) NOT NULL,
+  `servingPlmnid` varchar(15) NOT NULL,
+  `singleNssai` json NOT NULL,
+  `dnnConfigurations` json DEFAULT NULL,
+  `internalGroupIds` json DEFAULT NULL,
+  `sharedVnGroupDataIds` json DEFAULT NULL,
+  `sharedDnnConfigurationsId` varchar(50) DEFAULT NULL,
+  `odbPacketServices` json DEFAULT NULL,
+  `traceData` json DEFAULT NULL,
+  `sharedTraceDataId` varchar(50) DEFAULT NULL,
+  `expectedUeBehavioursList` json DEFAULT NULL,
+  `suggestedPacketNumDlList` json DEFAULT NULL,
+  `3gppChargingCharacteristics` varchar(50) DEFAULT NULL,
+  PRIMARY KEY (`ueid`,`servingPlmnid`) USING BTREE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3;

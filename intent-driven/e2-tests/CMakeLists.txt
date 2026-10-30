@@ -1,0 +1,8 @@
+cmake_minimum_required(VERSION 3.15)
+project(intent_e2_mcs_tests C)
+enable_testing()
+add_executable(test_mcs_policy test_mcs_policy.c)
+set(OAI_MAC_DIR "/home/ubuntu/oai-ran-e2/openair2/E2AP/RAN_FUNCTION/CUSTOMIZED" CACHE PATH "Production MAC policy header directory")
+target_include_directories(test_mcs_policy PRIVATE ${OAI_MAC_DIR})
+target_compile_options(test_mcs_policy PRIVATE -Wall -Wextra -Werror)
+add_test(NAME e2_mcs_policy COMMAND test_mcs_policy)

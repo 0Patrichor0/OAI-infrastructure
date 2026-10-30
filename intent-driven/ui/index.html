@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>意图驱动控制面 · OAI 5GC / O-RAN</title>
+<link rel="stylesheet" href="/static/style.css?v=20261030-intent-observability">
+</head>
+<body>
+
+<header>
+  <div class="brand">
+    <h1>意图驱动控制面</h1>
+    <span>OAI 5GC + O-RAN · 意图 → 变更 → 验证 → 回滚</span>
+  </div>
+  <div class="pills" id="pills">
+    <div class="pill"><span class="dot"></span>连接中…</div>
+  </div>
+</header>
+
+<main>
+  <section>
+    <div class="card">
+      <h2>下发意图 <span class="tag">自然语言 → 结构化</span></h2>
+      <div class="intent-picker">
+        <label for="intent-category">意图分类
+          <select id="intent-category"><option value="">选择意图分类</option></select>
+        </label>
+        <label for="intent-template">具体意图
+          <select id="intent-template" disabled><option value="">请先选择分类</option></select>
+        </label>
+      </div>
+      <div class="hint" id="intent-category-hint" role="status" aria-live="polite">先选择分类，再选择具体意图。也可直接在下方输入自然语言。</div>
+      <div class="intent-template-preview" id="intent-template-preview" hidden>
+        <pre id="intent-template-example"></pre>
+        <div class="hint" id="intent-template-note"></div>
+      </div>
+      <div class="row intent-template-actions">
+        <button type="button" class="ghost sm" id="btn-use-template" disabled>填入示例</button>
+        <span class="hint">填入后可修改参数，再解析和执行</span>
+      </div>
+      <label class="intent-input-label" for="nl">意图内容</label>
+      <textarea id="nl" placeholder="选择上方分类和具体意图，填入示例后修改参数；也可直接输入自然语言"></textarea>
+      <div class="row">
+        <button class="ghost" id="btn-parse">解析与预检查</button>
+        <button class="primary" id="btn-apply">预检查后执行</button>
+        <span class="hint" id="apply-hint">先查看当前值、目标值和影响，再确认执行</span>
+      </div>
+    </div>
+
+    <div class="card" id="parse-card" style="margin-top:16px; display:none">
+      <h2>解析结果</h2>
+      <div class="kv" id="parsed"></div>
+      <div style="margin-top:12px">
+        <div class="dim" style="font-size:12px;margin-bottom:6px">执行计划</div>
+        <div class="checks" id="plan"></div>
+      </div>
+    </div>
+
+    <div class="card" style="margin-top:16px">
+      <h2>执行日志 <span class="tag" id="job-tag" style="display:none"></span></h2>
+      <pre class="log" id="joblog">（暂无任务）</pre>
+    </div>
+    <div class="card" id="effects-card" style="margin-top:16px;display:none">
+      <h2>最近任务的执行效果</h2>
+      <div id="latest-effects"></div>
+    </div>
+  </section>
+
+  <section>
+    <div class="card" style="margin-bottom:16px">
+      <h2>网络切片与 UE <span class="tag" id="slice-tag">四面对齐才可用</span></h2>
+      <table>
+        <thead><tr><th>切片</th><th>核心网配置</th><th>RAN 配置</th><th>UPF 配置</th><th>UE 请求</th><th>当前会话</th><th>订户</th><th>可用</th></tr></thead>
+        <tbody id="slice-rows"><tr><td colspan="7" class="dim">读取中…</td></tr></tbody>
+      </table>
+
+      <div class="dim" style="font-size:12px;margin-top:12px">UE 节点（每个 = 独立 netns + 独立进程）</div>
+        <table>
+          <thead><tr><th>节点</th><th>单元</th><th>netns</th><th>状态</th><th>IMSI</th><th>会话 IP</th></tr></thead>
+          <tbody id="ue-node-rows"><tr><td colspan="6" class="dim">读取中…</td></tr></tbody>
+        </table>
+
+        <div class="dim" style="font-size:12px;margin-top:12px">订户与在线状态（在线 IMSI 不能重复新增）</div>
+      <table>
+        <thead><tr><th>IMSI</th><th>签约切片</th><th>5QI</th><th>下行 AMBR</th><th>鉴权 / 签约 / 状态</th><th>会话 IP</th><th>操作</th></tr></thead>
+        <tbody id="ue-rows"></tbody>
+      </table>
+
+      <div class="row" style="margin-top:12px">
+        <select id="ue-slice-choice" aria-label="新增 UE 使用的可用切片"><option value="">选择已就绪切片</option></select>
+        <button class="ghost sm" id="btn-new-imsi">填入未占用 IMSI</button>
+      </div>
+      <div class="row" style="margin-top:8px">
+        <input id="ue-imsi" placeholder="新增 UE 节点的 IMSI(15 位)" style="width:200px">
+        <input id="ue-sst" placeholder="SST" style="width:64px">
+        <input id="ue-sd" placeholder="SD(6 hex)" style="width:110px">
+        <input id="ue-5qi" placeholder="5QI" style="width:64px">
+        <input id="ue-ambr" placeholder="AMBR 如 100Mbps" style="width:150px">
+        <button class="ghost sm" id="btn-add-ue">新增 UE 节点</button>
+      </div>
+
+      <div class="row" style="margin-top:12px">
+        <b>DU 无线控制 · E2</b>
+        <input id="ran-mcs-value" type="number" min="0" max="28" placeholder="下行 MCS 上限" style="width:160px">
+        <button type="button" class="ghost sm" id="btn-ran-mcs-read">读取 DU 当前值</button>
+        <button class="ghost sm" id="btn-ran-mcs-set">经 E2 下发</button>
+      </div>
+      <div class="hint" id="ran-mcs-hint" role="status" aria-live="polite">作用于整个 DU 小区；运行时控制，DU 重启后恢复启动配置。可在意图账本回滚。</div>
+      <div class="row" style="margin-top:12px">
+        <b>切片下行新传 PRB · E2</b>
+        <select id="prb-slice-choice" aria-label="PRB 控制切片"><option value="">选择 PRB 控制切片</option></select>
+        <input id="prb-percent" type="number" min="1" max="100" placeholder="上限 %" style="width:90px">
+        <button type="button" class="ghost sm" id="btn-prb-read">读取策略与统计</button>
+        <button class="ghost sm" id="btn-prb-set">经 E2 下发</button>
+        <button class="ghost sm" id="btn-prb-clear">取消限额</button>
+      </div>
+      <div class="hint" id="prb-hint" role="status" aria-live="polite">同切片全部 UE 共享每个下行时隙的 PRB 使用上限；HARQ 重传与纯控制授权单独统计。这不是最低带宽预留，DU 重启后复位。</div>
+      <div class="hint" id="ue-add-hint">新增 = 新的独立 UE。请选择可用切片和未在线 IMSI；缺少鉴权或签约时按实验模板自动补齐。</div>
+      <div class="row" style="margin-top:8px">
+        <input id="slice-sst" placeholder="新切片 SST" style="width:100px">
+        <input id="slice-sd" placeholder="SD(6 hex)" style="width:110px">
+        <input id="slice-imsi" placeholder="绑定 IMSI(空=当前活动 UE)" style="width:220px">
+        <button class="ghost sm" id="btn-new-slice">新建切片（核心网 + RAN）</button>
+        <button class="ghost sm" id="btn-act-ue">切换主 UE 身份</button>
+      </div>
+      <div class="hint" id="slice-hint">新建切片会统一配置 AMF/SMF、UPF、CU/DU，并用 UE 建立会话及 ping 验收。任一项失败都不会显示建立成功；会中断所有会话。切片接入生效不代表 PRB/带宽资源隔离。</div>
+    </div>
+
+    <div class="card" style="margin-bottom:16px">
+      <h2>NWDAF 采集数据 <span class="tag" id="nwdaf-src">AnLF · smf / amf</span></h2>
+      <div class="metrics" id="nwdaf-metrics"></div>
+      <table style="margin-top:10px">
+        <thead><tr><th>SUPI</th><th>会话</th><th>QoS 样本</th><th>最近更新</th><th>末条用量</th><th>DNN / S-NSSAI</th></tr></thead>
+        <tbody id="nwdaf-smf"></tbody>
+      </table>
+      <div class="dim" style="font-size:12px;margin-top:10px" id="nwdaf-amf">AMF：读取中…</div>
+      <div class="row">
+        <span class="hint" id="nwdaf-sbi"></span>
+        <span class="hint" id="nwdaf-ts" style="margin-left:auto"></span>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>意图账本 <span class="tag" id="ledger-count"></span></h2>
+      <table>
+        <thead><tr><th>时间</th><th>动作</th><th>状态</th><th>对象</th><th>意图</th></tr></thead>
+        <tbody id="intents"></tbody>
+      </table>
+    </div>
+
+    <div class="card" style="margin-top:16px">
+      <h2>持久层 <span class="tag">重建后自动重放</span></h2>
+      <div class="dim" style="font-size:12px">签约（SQL，mysql init 重放）</div>
+      <table><tbody id="persist-db"></tbody></table>
+      <div class="dim" style="font-size:12px;margin-top:12px">配置（compose env / 辅助容器）</div>
+      <table><tbody id="persist-cfg"></tbody></table>
+      <div class="row">
+        <button class="ghost sm" id="btn-sync">同步期望配置（DB + 配置）</button>
+        <span class="hint" id="sync-hint"></span>
+      </div>
+    </div>
+  </section>
+</main>
+
+<div class="overlay" id="overlay">
+  <div class="modal">
+    <header>
+      <h3 id="m-title">意图详情</h3>
+      <span class="badge" id="m-state"></span>
+      <div style="margin-left:auto;display:flex;gap:8px">
+        <button class="sm" id="m-verify">重新验证</button>
+        <button class="sm" id="m-replay">回放</button>
+        <button class="sm danger" id="m-rollback">回滚</button>
+        <button class="sm ghost" id="m-close">关闭</button>
+      </div>
+    </header>
+    <div id="m-body"></div>
+  </div>
+</div>
+
+<div class="overlay" id="preview-overlay" role="dialog" aria-modal="true" aria-labelledby="preview-title">
+  <div class="modal">
+    <header><h3 id="preview-title">执行前预检查</h3></header>
+    <div id="preview-body" aria-live="polite"></div>
+    <div class="row">
+      <button type="button" class="primary" id="btn-preview-confirm" disabled>确认执行</button>
+      <button type="button" class="ghost" id="btn-preview-close">取消 / 关闭</button>
+    </div>
+  </div>
+</div>
+<script src="/static/app.js?v=20261030-intent-observability"></script>
+</body>
+</html>

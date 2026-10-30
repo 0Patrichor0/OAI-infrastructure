@@ -1,0 +1,49 @@
+{
+  "schema": 1,
+  "captured_at": "2026-10-30",
+  "layout_home": "/home/ubuntu",
+  "repositories": [
+    {
+      "name": "nwdaf",
+      "path": "nwdaf-rel17",
+      "url": "https://gitlab.eurecom.fr/netsoft/nwdaf-rel17.git",
+      "commit": "0550b910321bca9ed64d1ef8a5ae6753c7f22c2f",
+      "patch": "patches/nwdaf.patch"
+    },
+    {
+      "name": "anlf",
+      "path": "nwdaf-rel17/anlf",
+      "url": "https://gitlab.eurecom.fr/oai/cn5g/oai-cn5g-nwdaf.git",
+      "commit": "791a37fb939f3f61c8d0a42e6199e5c3fd581305",
+      "patch": "patches/anlf.patch"
+    },
+    {
+      "name": "core",
+      "path": "nwdaf-rel17/oai-cn5g-fed",
+      "url": "https://gitlab.eurecom.fr/oai/cn5g/oai-cn5g-fed.git",
+      "commit": "55859262fbcdaf6c89d8ccf9caed70ef432e4cb3",
+      "patch": null
+    },
+    {
+      "name": "oai",
+      "path": "oai-ran-e2",
+      "url": "https://github.com/duranta-project/openairinterface5g.git",
+      "commit": "9313cbea82bc3c6b8ff695dd808a0cde5f431724",
+      "patch": "patches/oai.patch"
+    },
+    {
+      "name": "flexric",
+      "path": "oai-ran-e2/openair2/E2AP/flexric",
+      "url": "https://github.com/duranta-project/flexric.git",
+      "commit": "18c3325091ad6890a706ebb2bba38d3c0fb741e5",
+      "patch": "patches/flexric.patch"
+    },
+    {
+      "name": "asn1c",
+      "path": "build-tools/asn1c",
+      "url": "https://github.com/mouse07410/asn1c.git",
+      "commit": "940dd5fa9f3917913fd487b13dfddfacd0ded06e",
+      "patch": null
+    }
+  ]
+}

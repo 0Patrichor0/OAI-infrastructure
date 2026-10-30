@@ -1,0 +1,22 @@
+[Unit]
+Description=FlexRIC xApp - E2SM-KPM monitor (per-UE KPI, infinite run)
+After=network-online.target flexric-ric.service
+Wants=flexric-ric.service
+Requires=flexric-ric.service
+
+[Service]
+Type=simple
+User=ubuntu
+WorkingDirectory=/home/ubuntu/oai-ran-e2/openair2/E2AP/flexric
+# 等 RIC 的 E42 端口(36422)就绪再连；xApp 只在启动时连一次 RIC
+ExecStartPre=/bin/bash -c 'for i in $(seq 1 60); do ss -ln -A sctp | grep -q "127.0.0.1:36422" && exit 0; sleep 2; done; exit 1'
+Environment=XAPP_DURATION=-1
+ExecStart=/home/ubuntu/oai-ran-e2/openair2/E2AP/flexric/build/examples/xApp/c/monitor/xapp_kpm_moni
+Restart=always
+RestartSec=10
+LimitNOFILE=65536
+StandardOutput=append:/home/ubuntu/oai-ran-logs/xapp_kpm.log
+StandardError=append:/home/ubuntu/oai-ran-logs/xapp_kpm.log
+
+[Install]
+WantedBy=multi-user.target

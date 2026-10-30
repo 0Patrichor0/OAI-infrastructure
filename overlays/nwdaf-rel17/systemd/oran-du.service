@@ -1,0 +1,20 @@
+[Unit]
+Description=O-RAN DU (F1-C 127.0.0.4 -> CU-CP, F1-U 127.0.0.5:2152, rfsim server 4043, E2 -> RIC)
+After=network-online.target oran-cu-cp.service oran-cu-up.service
+Wants=network-online.target oran-cu-cp.service oran-cu-up.service
+
+[Service]
+Type=simple
+ExecStartPre=/bin/bash -c 'for i in $(seq 1 60); do ss -ln -A sctp | grep -q "127.0.0.3:38472" && exit 0; sleep 2; done; exit 1'
+ExecStart=/home/ubuntu/oai-ran-e2/cmake_targets/ran_build/build/nr-softmodem -O /home/ubuntu/oai-ran-conf/du.conf --rfsim \
+  --MACRLCs.[0].local_n_address 127.0.0.4 \
+  --MACRLCs.[0].remote_n_address 127.0.0.3 \
+  --MACRLCs.[0].local_n_address_f1u 127.0.0.5
+Restart=always
+RestartSec=5
+LimitNOFILE=65536
+StandardOutput=append:/home/ubuntu/oai-ran-logs/du.log
+StandardError=append:/home/ubuntu/oai-ran-logs/du.log
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,12 @@
+[Unit]
+Description=Watchdog for OAI SMF/UDR (libnghttp2_asio segfault) + NWDAF SBI subscription recovery
+After=docker.service
+
+[Service]
+User=ubuntu
+SupplementaryGroups=docker
+RuntimeDirectory=oai-nf-watchdog
+RuntimeDirectoryMode=0750
+Type=oneshot
+ExecStart=/usr/bin/flock -n /run/oai-nf-watchdog/watchdog.lock /home/ubuntu/nwdaf-rel17/systemd/oai-nf-watchdog.sh
+Nice=10

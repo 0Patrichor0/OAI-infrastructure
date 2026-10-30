@@ -1,0 +1,6 @@
+[Unit]
+Description=Restart KPM xApp if E42 indications stopped
+
+[Service]
+Type=oneshot
+ExecStart=/home/ubuntu/nwdaf-rel17/systemd/xapp-kpm-watchdog.sh

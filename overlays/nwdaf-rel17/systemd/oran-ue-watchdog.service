@@ -1,0 +1,10 @@
+[Unit]
+Description=UE / 用户面自愈（L1 重启 UE，L2 重建 UPF+SMF，L3 全量重建）
+After=network-online.target docker.service
+
+[Service]
+Type=oneshot
+Environment=UE_REPAIR_ALLOW_L3=1
+ExecStart=/home/ubuntu/nwdaf-rel17/ue-repair.sh
+TimeoutStartSec=900
+Nice=5

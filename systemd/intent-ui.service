@@ -1,0 +1,18 @@
+[Unit]
+Description=Intent-driven control plane web UI (:8099)
+After=network-online.target docker.service
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=ubuntu
+Group=ubuntu
+WorkingDirectory=/home/ubuntu/intent-driven
+ExecStart=/usr/bin/python3 ui/server.py --host @INTENT_BIND@ --port 8099
+Restart=always
+RestartSec=5
+Environment=INTENT_HOME=/home/ubuntu/intent-driven
+Environment=PYTHONUNBUFFERED=1
+
+[Install]
+WantedBy=multi-user.target

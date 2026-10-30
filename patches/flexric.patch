@@ -1,0 +1,176 @@
+diff --git a/src/ric/endpoint_ric.c b/src/ric/endpoint_ric.c
+index 2ca50fd..dcab283 100644
+--- a/src/ric/endpoint_ric.c
++++ b/src/ric/endpoint_ric.c
+@@ -104,6 +104,10 @@ void e2ap_send_bytes_ric(const e2ap_ep_ric_t* ep, global_e2_node_id_t const* id
+   assert(ep != NULL);
+ 
+   sctp_info_t s = find_map_e2_node_sad(( map_e2_node_sockaddr_t*)&ep->e2_nodes, id);
++  if (s.addr.sin_family != AF_INET) {
++    printf("[NEAR-RIC]: Dropping queued message for disconnected E2 node %u\n", id->nb_id.nb_id);
++    return;
++  }
+ 
+   sctp_msg_t msg = {.ba = ba,
+                     .info = s};
+diff --git a/src/ric/iApp/msg_handler_iapp.c b/src/ric/iApp/msg_handler_iapp.c
+index 6ff4511..bda8843 100644
+--- a/src/ric/iApp/msg_handler_iapp.c
++++ b/src/ric/iApp/msg_handler_iapp.c
+@@ -12,6 +12,7 @@
+ #include "util/compare.h"
+ #include "util/alg_ds/ds/lock_guard/lock_guard.h"
+ #include "util/time_now_us.h"
++#include <stdatomic.h>
+ 
+ #include "iapp_if_generic.h"
+ #include "xapp_ric_id.h"
+@@ -269,7 +270,11 @@ e2ap_msg_t e2ap_handle_ric_indication_iapp(e42_iapp_t* iapp, const e2ap_msg_t* m
+   xapp_ric_id_xpct_t xpctd = find_xapp_map_ric_id(&iapp->map_ric_id, src->ric_id.ric_req_id);
+ 
+   if(xpctd.has_value == false){
+-    printf("RIC Indication message arrived for RIC REQ ID %d but no xApp associated\n", src->ric_id.ric_req_id);
++    /* Late indications after xApp disconnect must not flood the RIC log. */
++    static _Atomic unsigned long orphan_count = 0;
++    unsigned long count = atomic_fetch_add(&orphan_count, 1) + 1;
++    if (count == 1 || count % 10000 == 0)
++      printf("RIC Indication without xApp: request=%d, total=%lu\n", src->ric_id.ric_req_id, count);
+     e2ap_msg_t none = {.type = NONE_E2_MSG_TYPE};
+     return none;
+   }
+diff --git a/src/ric/iApps/stdout.c b/src/ric/iApps/stdout.c
+index 53d2119..5aa2934 100644
+--- a/src/ric/iApps/stdout.c
++++ b/src/ric/iApps/stdout.c
+@@ -309,6 +309,11 @@ void print_kpm_stats(kpm_ind_data_t const* kpm)
+ 
+ void notify_stdout_listener(sm_ag_if_rd_ind_t const* data)
+ {
++  /* The xApps already persist telemetry. Allow deployments to disable this
++   * duplicate, unbounded per-indication file without disabling E2 forwarding. */
++  const char* enabled = getenv("FLEXRIC_STATS_LOG");
++  if (enabled != NULL && strcmp(enabled, "0") == 0)
++    return;
+   assert(data != NULL);
+   if(data->type == MAC_STATS_V0)  
+     print_mac_stats(&data->mac.msg);
+diff --git a/src/ric/map_e2_node_sockaddr.c b/src/ric/map_e2_node_sockaddr.c
+index 50ef4e8..f7f193d 100644
+--- a/src/ric/map_e2_node_sockaddr.c
++++ b/src/ric/map_e2_node_sockaddr.c
+@@ -116,6 +116,14 @@ global_e2_node_id_t* rm_map_sad_e2_node(map_e2_node_sockaddr_t* m, sctp_info_t c
+   assert(s != NULL);
+ 
+   lock_guard(&m->mtx);
++  /* A peer can shut down before E2 Setup, or notify shutdown twice. */
++  assoc_rb_tree_t* tree = &m->map.right;
++  if (assoc_size(tree) == 0)
++    return NULL;
++  void* end = assoc_end(tree);
++  void* it = find_if(tree, assoc_front(tree), end, s, eq_sctp_info_wrapper);
++  if (it == end)
++    return NULL;
+   void (*free_sctp_info)(void*) = NULL;
+   global_e2_node_id_t* id = bi_map_extract_right(&m->map, (sctp_info_t*) s, sizeof(sctp_info_t), free_sctp_info);
+   return id;
+@@ -128,13 +136,17 @@ sctp_info_t find_map_e2_node_sad(map_e2_node_sockaddr_t* m, global_e2_node_id_t
+ 
+   lock_guard(&m->mtx);
+ 
+-  assoc_rb_tree_t* tree = &m->map.left;  
++  assoc_rb_tree_t* tree = &m->map.left;
++  /* A queued message may outlive the node's SCTP association. */
++  if (assoc_size(tree) == 0)
++    return (sctp_info_t){0};
+ 
+   void* it = assoc_front(tree);
+   void* end = assoc_end(tree);
+ 
+   it = find_if(tree, it, end, (global_e2_node_id_t*)id, eq_global_e2_node_id_wrapper);
+-  assert(it != end && "E2 Node not found in the tree");
++  if (it == end)
++    return (sctp_info_t){0};
+ 
+   sctp_info_t* s = assoc_value(tree, it);  
+ 
+diff --git a/src/ric/map_e2_node_sockaddr.h b/src/ric/map_e2_node_sockaddr.h
+index 4e20505..4112296 100644
+--- a/src/ric/map_e2_node_sockaddr.h
++++ b/src/ric/map_e2_node_sockaddr.h
+@@ -38,7 +38,7 @@ global_e2_node_id_t* rm_map_sad_e2_node(map_e2_node_sockaddr_t* m, sctp_info_t c
+ 
+ sctp_info_t find_map_e2_node_sad(map_e2_node_sockaddr_t* m, global_e2_node_id_t const* id);
+ 
+-sctp_info_t find_map_e2_node_sad(map_e2_node_sockaddr_t * m, global_e2_node_id_t const* id);
++/* Missing/disconnected nodes return a zeroed address (sin_family == 0). */
+ 
+ #endif
+ 
+diff --git a/src/ric/not_handler_ric.c b/src/ric/not_handler_ric.c
+index 6bc8b12..5d6f91c 100644
+--- a/src/ric/not_handler_ric.c
++++ b/src/ric/not_handler_ric.c
+@@ -32,6 +32,8 @@ void notification_handle_ric(near_ric_t* ric, sctp_msg_t const* msg)
+   assert(msg->notif->sn_header.sn_type == SCTP_SHUTDOWN_EVENT && "Only shutdown event supported");
+ 
+   global_e2_node_id_t* id = e2ap_rm_sock_addr_ric(&ric->ep, &msg->info);
++  if (id == NULL)
++    return;
+   defer( { free_global_e2_node_id(id);  free(id); } );
+ 
+   {
+diff --git a/src/ric/plugin_ric.c b/src/ric/plugin_ric.c
+index a602158..a61e908 100644
+--- a/src/ric/plugin_ric.c
++++ b/src/ric/plugin_ric.c
+@@ -146,10 +146,15 @@ void load_plugin_ric(plugin_ric_t* p, const char* path)
+ 
+ 
+   char* match = strstr(so_name, needle); // search_naive(strlen(needle), needle, strlen(so_name ), so_name);
+-  assert(match != NULL && "Could not find the string _sm.so in the so\n");
++  if(match == NULL){
++    // Not an SM plugin (e.g. libe42_xapp_shared.so also lives in this dir).
++    // Release builds compile the asserts away, so an early return is required.
++    // NB: do NOT dlclose(handle) here - dlopen may have failed (handle==NULL).
++    return;
++  }
++  assert(match > ptr_so_name);
+ 
+   char* ptr = &symbol_so[5];
+-  assert(match > ptr_so_name);
+   strncat(ptr, ptr_so_name , match - ptr_so_name);
+   ptr += match - ptr_so_name;
+   const char* suffix = "_sm_ric";
+diff --git a/src/sm/mac_sm/mac_sm_agent.c b/src/sm/mac_sm/mac_sm_agent.c
+index 5a94ac6..38e536e 100644
+--- a/src/sm/mac_sm/mac_sm_agent.c
++++ b/src/sm/mac_sm/mac_sm_agent.c
+@@ -101,11 +101,13 @@ sm_ctrl_out_data_t on_control_mac_sm_ag(sm_agent_t const* sm_agent, sm_ctrl_req_
+   assert(data != NULL);
+   sm_mac_agent_t* sm = (sm_mac_agent_t*) sm_agent;
+ 
++  if (data->len_hdr != sizeof(mac_ctrl_hdr_t) || data->len_msg != sizeof(mac_ctrl_msg_t)
++      || data->ctrl_hdr == NULL || data->ctrl_msg == NULL)
++    return (sm_ctrl_out_data_t){0};
++
+   mac_ctrl_hdr_t hdr = mac_dec_ctrl_hdr(&sm->enc, data->len_hdr, data->ctrl_hdr);
+-  assert(hdr.dummy == 1 && "Only dummy == 1 supported ");
+ 
+   mac_ctrl_msg_t msg = mac_dec_ctrl_msg(&sm->enc, data->len_msg, data->ctrl_msg);
+-  assert(msg.action == 42 && "Only action number 42 supported");
+ 
+ //  sm_ag_if_wr_t wr = {.type = CONTROL_SM_AG_IF_WR };
+ //  wr.ctrl.type = MAC_CTRL_REQ_V0; 
+diff --git a/src/sm/mac_sm/mac_sm_ric.c b/src/sm/mac_sm/mac_sm_ric.c
+index 50df6a6..bed2e7a 100644
+--- a/src/sm/mac_sm/mac_sm_ric.c
++++ b/src/sm/mac_sm/mac_sm_ric.c
+@@ -95,8 +95,6 @@ sm_ctrl_req_data_t ric_on_control_req_mac_sm_ric(sm_ric_t const* sm_ric, void* c
+   assert(sm_ric != NULL); 
+   assert(ctrl != NULL); 
+   mac_ctrl_req_data_t const* req = (mac_ctrl_req_data_t const*)ctrl;
+-  assert(req->hdr.dummy == 1);
+-  assert(req->msg.action == 42);
+ 
+   sm_mac_ric_t* sm = (sm_mac_ric_t*)sm_ric;  
+ 

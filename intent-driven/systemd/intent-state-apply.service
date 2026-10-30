@@ -1,0 +1,9 @@
+[Unit]
+Description=Apply intent-driven subscriber state to oai_db (idempotent)
+After=docker.service
+
+[Service]
+Type=oneshot
+ExecStart=/usr/bin/python3 /home/ubuntu/intent-driven/tools/apply_state.py
+TimeoutStartSec=180
+Nice=5

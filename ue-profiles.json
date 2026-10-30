@@ -1,0 +1,26 @@
+{
+  "208950000000031": {
+    "fiveQI": 9,
+    "ambr_ul": "100Mbps",
+    "ambr_dl": "100Mbps",
+    "arp_priority": 1
+  },
+  "208950000000097": {
+    "fiveQI": 9,
+    "ambr_ul": "100Mbps",
+    "ambr_dl": "100Mbps",
+    "arp_priority": 1
+  },
+  "208950000000132": {
+    "fiveQI": 6,
+    "ambr_ul": "50Mbps",
+    "ambr_dl": "50Mbps",
+    "arp_priority": 1
+  },
+  "208950000000095": {
+    "fiveQI": null,
+    "ambr_ul": null,
+    "ambr_dl": null,
+    "arp_priority": null
+  }
+}

@@ -1,0 +1,284 @@
+diff --git a/cli/examples/analytics/numPdu.json b/cli/examples/analytics/numPdu.json
+index 827cb79..8e57371 100644
+--- a/cli/examples/analytics/numPdu.json
++++ b/cli/examples/analytics/numPdu.json
+@@ -2,7 +2,7 @@
+   "event-id": "NETWORK_PERFORMANCE",
+   "ana-req": {
+     "startTs": "2022-08-01T09:15:33.018Z",
+-    "endTs": "2024-10-30T09:15:33.018Z"
++    "endTs": "2026-10-30T09:15:33.018Z"
+   },
+   "event-filter": {
+     "nwPerfTypes": ["SESS_SUCC_RATIO"]
+diff --git a/cli/examples/analytics/numPdu_snssais_dnns.json b/cli/examples/analytics/numPdu_snssais_dnns.json
+index da96b8e..63b3b66 100644
+--- a/cli/examples/analytics/numPdu_snssais_dnns.json
++++ b/cli/examples/analytics/numPdu_snssais_dnns.json
+@@ -2,7 +2,7 @@
+   "event-id": "NETWORK_PERFORMANCE",
+   "ana-req": {
+     "startTs": "2022-08-01T09:15:33.018Z",
+-    "endTs": "2024-10-30T09:15:33.018Z"
++    "endTs": "2026-10-30T09:15:33.018Z"
+   },
+   "event-filter": {
+     "snssais": [
+diff --git a/cli/examples/analytics/numUe.json b/cli/examples/analytics/numUe.json
+index d469ecf..25d8662 100644
+--- a/cli/examples/analytics/numUe.json
++++ b/cli/examples/analytics/numUe.json
+@@ -2,7 +2,7 @@
+   "event-id": "NETWORK_PERFORMANCE",
+   "ana-req": {
+     "startTs": "2022-08-01T09:15:33.018Z",
+-    "endTs": "2024-10-30T09:15:33.018Z"
++    "endTs": "2026-10-30T09:15:33.018Z"
+   },
+   "event-filter": {
+     "nwPerfTypes": ["NUM_OF_UE"]
+diff --git a/cli/examples/analytics/ueComm.json b/cli/examples/analytics/ueComm.json
+index 1a9c54b..bf11703 100644
+--- a/cli/examples/analytics/ueComm.json
++++ b/cli/examples/analytics/ueComm.json
+@@ -1,8 +1,8 @@
+ {
+   "event-id": "UE_COMMUNICATION",
+   "ana-req": {
+-    "startTs": "2023-01-01T09:15:33.018Z",
+-    "endTs": "2024-10-30T09:15:33.018Z"
++    "startTs": "2024-01-01T09:15:33.018Z",
++    "endTs": "2026-10-30T09:15:33.018Z"
+   },
+   "event-filter": {},
+   "supported-features": {},
+diff --git a/cli/nwdaf.py b/cli/nwdaf.py
+index 16d664b..10f9802 100644
+--- a/cli/nwdaf.py
++++ b/cli/nwdaf.py
+@@ -1,36 +1,42 @@
+-#/*
+-# * Licensed to the OpenAirInterface (OAI) Software Alliance under one or more
+-# * contributor license agreements.  See the NOTICE file distributed with
+-# * this work for additional information regarding copyright ownership.
+-# * The OpenAirInterface Software Alliance licenses this file to You under
+-# * the OAI Public License, Version 1.1  (the "License"); you may not use this
+-# * file except in compliance with the License. You may obtain a copy of the
+-# * License at
+-# *
+-# *      http://www.openairinterface.org/?page_id=698
+-# *
+-# * Unless required by applicable law or agreed to in writing, software
+-# * distributed under the License is distributed on an "AS IS" BASIS,
+-# * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+-# * See the License for the specific language governing permissions and
+-# * limitations under the License.
+-# *-------------------------------------------------------------------------------
+-# * For more information about the OpenAirInterface (OAI) Software Alliance:
+-# *      contact@openairinterface.org
+-# */
+ 
+-#/*
+-# * Author: Abdelkader Mekrache <abdelkader.mekrache@eurecom.fr>
+-# * Description: This file contains a simple CLI code.
+-# */
++# #/*
++# # * Licensed to the OpenAirInterface (OAI) Software Alliance under one or more
++# # * contributor license agreements.  See the NOTICE file distributed with
++# # * this work for additional information regarding copyright ownership.
++# # * The OpenAirInterface Software Alliance licenses this file to You under
++# # * the OAI Public License, Version 1.1  (the "License"); you may not use this
++# # * file except in compliance with the License. You may obtain a copy of the
++# # * License at
++# # *
++# # *      http://www.openairinterface.org/?page_id=698
++# # *
++# # * Unless required by applicable law or agreed to in writing, software
++# # * distributed under the License is distributed on an "AS IS" BASIS,
++# # * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
++# # * See the License for the specific language governing permissions and
++# # * limitations under the License.
++# # *-------------------------------------------------------------------------------
++# # * For more information about the OpenAirInterface (OAI) Software Alliance:
++# # *      contact@openairinterface.org
++# # */
++
++# #/*
++# # * Author: Abdelkader Mekrache <abdelkader.mekrache@eurecom.fr>
++# # * Description: This file contains a simple CLI code.
++# # */
+ 
+ import json
+ import requests
+ import typer
+ from flask import Flask, request
+ 
+-analytics_url = 'http://oai-nwdaf-nbi-gateway/nnwdaf-analyticsinfo/v1/analytics'
+-subscription_url = 'http://oai-nwdaf-nbi-gateway/nnwdaf-eventssubscription/v1/subscriptions'
++# analytics_url = 'http://oai-nwdaf-nbi-gateway/nnwdaf-analyticsinfo/v1/analytics'
++# subscription_url = 'http://oai-nwdaf-nbi-gateway/nnwdaf-eventssubscription/v1/subscriptions'
++
++analytics_url = 'http://localhost:6059/nnwdaf-analyticsinfo/v1/analytics'
++subscription_url = 'http://localhost:6060/nnwdaf-eventssubscription/v1/subscriptions'
++
++
+ app = typer.Typer()
+ flask_app = Flask(__name__)
+ 
+@@ -88,4 +94,4 @@ def subscribe(
+     flask_app.run(host='0.0.0.0', port=3000, debug=True)
+ 
+ if __name__ == '__main__':
+-    app()
+\ No newline at end of file
++    app()
+diff --git a/components/oai-nwdaf-engine-ads/docker/Dockerfile.engine-ads b/components/oai-nwdaf-engine-ads/docker/Dockerfile.engine-ads
+index bd64c39..8e86049 100644
+--- a/components/oai-nwdaf-engine-ads/docker/Dockerfile.engine-ads
++++ b/components/oai-nwdaf-engine-ads/docker/Dockerfile.engine-ads
+@@ -24,13 +24,54 @@
+ # * Description: Docker file of the oai-nwdaf-engine-ads.
+ # */
+ 
++# FROM python:3.6.9-slim AS oai-nwdaf-engine-ads
++# WORKDIR /app
++
++# # Fix Debian Buster EOL issue
++# RUN sed -i 's|deb.debian.org|archive.debian.org|g' /etc/apt/sources.list && \
++#     sed -i 's|security.debian.org|archive.debian.org|g' /etc/apt/sources.list && \
++#     echo 'Acquire::Check-Valid-Until "false";' > /etc/apt/apt.conf.d/99no-check-valid-until && \
++#     apt-get update && \
++#     apt-get install --yes net-tools
++
++# COPY requirements.txt .
++# RUN pip install --no-color --upgrade pip wheel && \
++#     pip install --no-cache-dir -r requirements.txt --no-color && \
++#     pip cache purge
++
++# COPY . .
++# EXPOSE 8080/tcp
++# CMD [ "python3", "run.py" ]
++
++
+ FROM python:3.6.9-slim AS oai-nwdaf-engine-ads
+ WORKDIR /app
+-RUN apt-get update && apt-cache search net-tools &&  apt-get install --yes net-tools 
++
++# Replace old repo URLs with archived ones
++RUN sed -i 's|deb.debian.org|archive.debian.org|g' /etc/apt/sources.list && \
++    sed -i 's|security.debian.org|archive.debian.org|g' /etc/apt/sources.list && \
++    echo 'Acquire::Check-Valid-Until "false";' > /etc/apt/apt.conf.d/99no-check-valid && \
++    apt-get update && apt-get install -y net-tools
++
+ COPY requirements.txt .
+ RUN pip install --no-color --upgrade pip wheel && \
+     pip install --no-cache-dir -r requirements.txt --no-color && \
+     pip cache purge
++
+ COPY . .
+ EXPOSE 8080/tcp
+-CMD [ "python3", "run.py" ]
++CMD ["python3", "run.py"]
++
++
++
++
++# FROM python:3.6.9-slim AS oai-nwdaf-engine-ads
++# WORKDIR /app
++# RUN apt-get update && apt-cache search net-tools &&  apt-get install --yes net-tools
++# COPY requirements.txt .
++# RUN pip install --no-color --upgrade pip wheel && \
++#     pip install --no-cache-dir -r requirements.txt --no-color && \
++#     pip cache purge
++# COPY . .
++# EXPOSE 8080/tcp
++# CMD [ "python3", "run.py" ]
+diff --git a/docker-compose/conf/kong.yml b/docker-compose/conf/kong.yml
+index 50d8ad8..3fe7004 100644
+--- a/docker-compose/conf/kong.yml
++++ b/docker-compose/conf/kong.yml
+@@ -26,30 +26,70 @@
+ # * Description: This file contains the kong DBless configuration.
+ # */
+ 
++
++
++
+ _format_version: '1.1'
+ _transform: true
+ services:
+ - name: oai-nwdaf-nbi-analytics
+-  url: http://192.168.74.151:8080/nnwdaf-analyticsinfo/v1/analytics
++  url: http://192.168.74.151:8080
+   routes:
+     - name: oai-nwdaf-nbi-analytics-route
+-      hosts: 
+-      - oai-nwdaf-nbi-gateway
+       paths: 
+-      - /nnwdaf-analyticsinfo/v1/analytics
++      - /nnwdaf-analyticsinfo
++      strip_path: false
+ - name: oai-nwdaf-nbi-events
+-  url: http://192.168.74.152:8080/nnwdaf-eventssubscription/v1
++  url: http://192.168.74.152:8080
+   routes:
+     - name: oai-nwdaf-nbi-events-route
+-      hosts:
+-      - oai-nwdaf-nbi-gateway
+       paths:
+-      - /nnwdaf-eventssubscription/v1
++      - /nnwdaf-eventssubscription
++      strip_path: false
+ - name: oai-nwdaf-nbi-ml
+-  url: http://192.168.74.153:8080/nnwdaf-mlmodelprovision/v1
++  url: http://192.168.74.153:8080
+   routes:
+     - name: oai-nwdaf-nbi-ml-route
+-      hosts:
+-      - oai-nwdaf-nbi-gateway
+       paths:
+-      - /nnwdaf-mlmodelprovision/v1
+\ No newline at end of file
++      - /nnwdaf-mlmodelprovision
++      strip_path: false
++
++
++
++
++
++
++
++
++
++
++
++
++
++# _format_version: '1.1'
++# _transform: true
++# services:
++# - name: oai-nwdaf-nbi-analytics
++#   url: http://192.168.74.151:8080/nnwdaf-analyticsinfo/v1/analytics
++#   routes:
++#     - name: oai-nwdaf-nbi-analytics-route
++#       hosts:
++#       - oai-nwdaf-nbi-gateway
++#       paths:
++#       - /nnwdaf-analyticsinfo/v1/analytics
++# - name: oai-nwdaf-nbi-events
++#   url: http://192.168.74.152:8080/nnwdaf-eventssubscription/v1
++#   routes:
++#     - name: oai-nwdaf-nbi-events-route
++#       hosts:
++#       - oai-nwdaf-nbi-gateway
++#       paths:
++#       - /nnwdaf-eventssubscription/v1
++# - name: oai-nwdaf-nbi-ml
++#   url: http://192.168.74.153:8080/nnwdaf-mlmodelprovision/v1
++#   routes:
++#     - name: oai-nwdaf-nbi-ml-route
++#       hosts:
++#       - oai-nwdaf-nbi-gateway
++#       paths:
++#       - /nnwdaf-mlmodelprovision/v1
+\ No newline at end of file
